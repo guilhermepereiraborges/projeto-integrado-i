@@ -21,7 +21,7 @@ Este repositório é dedicado à **documentação e artefatos** do projeto GYM-O
 ## 🌐 Links Importantes
 
 - **Repositório do Código-Fonte**: [GYM-OPS - Código](https://github.com/jeffaugg/gym-ops)
-- **Protótipo do Figma**: [Acesse aqui](https://drive.google.com/open?id=1FTV_9_mWKtTRbnghaM2SXwhgtAkrUNV9&amp%3Busp=drive_copy&usp=drive_copy)
+- **Protótipo do Figma**: [Acesse aqui](https://www.figma.com/design/OEoRGvAw33OihvGyZMIFxE/GymOps?node-id=0-1&t=irmp8GjcojwEtk0A-1)
 
 ---
 
