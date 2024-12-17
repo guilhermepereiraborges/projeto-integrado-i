@@ -84,7 +84,7 @@ Este repositório se concentra exclusivamente nos artefatos e documentação do 
 
 - **Guilherme Pereira Borges**
 - **Jeferson Augusto De Melo Gomes**
-- **Sheila Do Ó**
+- **Sheiely Do Ó**
 - **Wendel Rodrigues Viana**
 
 **Acompanhe nosso progresso e contribua para o GYM-OPS! 🚀**
