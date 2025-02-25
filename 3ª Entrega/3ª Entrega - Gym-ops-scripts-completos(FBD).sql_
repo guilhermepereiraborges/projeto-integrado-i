@@ -1,0 +1,303 @@
+-- Início da transação (opcional)
+BEGIN;
+
+-- 1) Criação da tabela de usuários
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    tel VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL
+);
+
+-- 2) Criação da tabela de planos
+CREATE TABLE planos (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price FLOAT NOT NULL,
+    duration INTEGER,
+    spots INT,
+    adm_id INT REFERENCES users(id)
+);
+
+-- 3) Criação da tabela de alunos
+CREATE TABLE alunos (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    telephone VARCHAR(50) NOT NULL,
+    cpf VARCHAR(50) NOT NULL,
+    plan_id INTEGER NOT NULL REFERENCES planos(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    health_notes VARCHAR(500),
+    status BOOLEAN DEFAULT true,
+    gender VARCHAR(50),
+    adm_id INT REFERENCES users(id),
+    CONSTRAINT unique_email_adm UNIQUE (email, adm_id),
+    CONSTRAINT unique_cpf_adm UNIQUE (cpf, adm_id)
+);
+
+-- 4) Criação da tabela de avaliações
+CREATE TABLE avaliacoes (
+    id SERIAL PRIMARY KEY,
+    aluno_id INTEGER NOT NULL REFERENCES alunos(id),
+    instructor_id INTEGER NOT NULL REFERENCES users(id),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    height FLOAT NOT NULL,
+    weight FLOAT NOT NULL,
+    fat_mass FLOAT NOT NULL,
+    lean_mass FLOAT NOT NULL,
+    left_arm_relaxed FLOAT,
+    right_arm_relaxed FLOAT,
+    left_arm_contracted FLOAT,
+    right_arm_contracted FLOAT,
+    left_thigh FLOAT,
+    right_thigh FLOAT,
+    left_calf FLOAT,
+    right_calf FLOAT,
+    chest FLOAT,
+    abdomen FLOAT,
+    waist FLOAT,
+    hip FLOAT
+);
+
+
+
+-- 5) Criação da tabela de fotos_avaliacoes
+CREATE TABLE fotos_avaliacoes (
+    id SERIAL PRIMARY KEY,
+    avaliacao_id INTEGER NOT NULL REFERENCES avaliacoes(id) ON DELETE CASCADE,
+    foto_path TEXT NOT NULL,
+    data_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6) Criação da tabela de exercicios
+CREATE TABLE exercicios (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    muscles TEXT NOT NULL,
+    adm_id INT REFERENCES users(id)
+);
+
+-- 7) Criação da tabela de treinos
+CREATE TABLE treinos (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    notes TEXT,
+    adm_id INT REFERENCES users(id)
+);
+
+-- 8) Criação da tabela associativa exercicios_de_treinos
+CREATE TABLE exercicios_de_treinos (
+    id SERIAL PRIMARY KEY,
+    treino_id INTEGER NOT NULL REFERENCES treinos(id) ON DELETE CASCADE,
+    exercicio_id INTEGER NOT NULL REFERENCES exercicios(id) ON DELETE CASCADE,
+    repeticoes INTEGER NOT NULL,
+    series INTEGER NOT NULL,
+    descanso_segundos INTEGER NOT NULL
+);
+
+-- 9) Criação da tabela treinos_de_alunos
+CREATE TABLE treinos_de_alunos (
+    id SERIAL PRIMARY KEY,
+    aluno_id INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+    treino_id INTEGER NOT NULL REFERENCES treinos(id) ON DELETE CASCADE
+);
+
+-- 10) Criação da tabela mensagens
+CREATE TABLE mensagens (
+    id SERIAL PRIMARY KEY,
+    id_adm INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    recipient_type VARCHAR(20) NOT NULL CHECK (recipient_type IN ('STUDENTS', 'INSTRUCTORS', 'ALL')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11) Criação da tabela pagamentos
+CREATE TABLE pagamentos (
+    id SERIAL PRIMARY KEY,
+    id_aluno INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+    id_plano INTEGER NOT NULL REFERENCES planos(id) ON DELETE CASCADE,
+    status BOOLEAN NOT NULL,
+    payment VARCHAR(50) NOT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiration_date TIMESTAMP NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id)
+);
+
+-- 12) Criação da tabela presenca
+CREATE TABLE presenca (
+    id SERIAL PRIMARY KEY,
+    aluno_id INTEGER NOT NULL REFERENCES alunos(id),
+    data DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+-- 13) Criação da tabela dias
+CREATE TABLE dias (
+    id SERIAL PRIMARY KEY,
+    day_week VARCHAR(20) NOT NULL UNIQUE CHECK(day_week IN ('Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'))
+);
+
+-- 14) Criação da tabela horarios
+CREATE TABLE horarios (
+    id SERIAL PRIMARY KEY,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
+-- 15) Criação da tabela cargo_horaria
+CREATE TABLE cargo_horaria (
+    id SERIAL PRIMARY KEY,
+    dia_id INT NOT NULL REFERENCES dias(id),
+    horario_id INT NOT NULL REFERENCES horarios(id),
+    user_id INT REFERENCES users(id)
+);
+
+-- 16) Inserção dos dias fixos
+INSERT INTO dias(day_week) 
+VALUES ('Domingo'), ('Segunda'), ('Terça'), ('Quarta'), ('Quinta'), ('Sexta'), ('Sábado');
+
+-- 17) Inserção dos horários fixos
+INSERT INTO horarios(start_time, end_time) 
+VALUES ('08:00:00', '12:00:00'),
+       ('13:00:00', '17:00:00'),
+       ('18:00:00', '22:00:00');
+
+-- 18) Alteração da tabela de usuários para adicionar colunas extras
+ALTER TABLE users
+    ADD COLUMN cpf VARCHAR(14) UNIQUE,
+    ADD COLUMN cref VARCHAR(20) UNIQUE,
+    ADD COLUMN gender VARCHAR(1) DEFAULT 'O' CHECK (gender IN ('M', 'F', 'O')),
+    ADD COLUMN date_of_birth DATE,
+    ADD COLUMN adm_id INT REFERENCES users(id);
+
+----------------------------------------------------------------------------
+-- Inserção de 5 registros (tuplas) em cada tabela
+----------------------------------------------------------------------------
+
+-- Tabela users
+INSERT INTO users (name, email, tel, password, role, cpf, cref, gender, date_of_birth, adm_id)
+VALUES
+('Admin1',    'admin1@example.com',   '111111', 'admin123', 'ADMIN',      '111.111.111-11', 'CREF0001', 'M', '1980-01-01', NULL),
+('Instr1',    'instr1@example.com',   '222222', 'instr123', 'INSTRUCTOR', '222.222.222-22', 'CREF0002', 'F', '1985-02-02', 1   ),
+('Instr2',    'instr2@example.com',   '333333', 'instr456', 'INSTRUCTOR', '333.333.333-33', 'CREF0003', 'M', '1990-03-03', 1   ),
+('Student1',  'stud1@example.com',    '444444', 'stud123',  'STUDENT',    '444.444.444-44', NULL,        'F', '1995-04-04', 1   ),
+('Student2',  'stud2@example.com',    '555555', 'stud456',  'STUDENT',    '555.555.555-55', NULL,        'M', '1996-05-05', 1   );
+
+-- Tabela planos
+INSERT INTO planos (name, price, duration, spots, adm_id)
+VALUES
+('Plano Bronze',    49.99, 30,  10, 1),
+('Plano Prata',     69.99, 60,  15, 1),
+('Plano Ouro',      99.99, 90,  20, 1),
+('Plano Diamante', 149.99,120,  25, 1),
+('Plano Platinum', 199.99,180,  30, 1);
+
+-- Tabela alunos
+INSERT INTO alunos (name, date_of_birth, email, telephone, cpf, plan_id, health_notes, status, gender, adm_id)
+VALUES
+('Aluno1','2000-01-01','aluno1@example.com','11-1111','11111111111',1,'Observação 1',true,'M',1),
+('Aluno2','1999-02-02','aluno2@example.com','22-2222','22222222222',2,'Observação 2',true,'F',1),
+('Aluno3','1998-03-03','aluno3@example.com','33-3333','33333333333',3,'Observação 3',true,'M',1),
+('Aluno4','1997-04-04','aluno4@example.com','44-4444','44444444444',4,'Observação 4',true,'F',1),
+('Aluno5','1996-05-05','aluno5@example.com','55-5555','55555555555',5,'Observação 5',true,'M',1);
+
+-- Tabela avaliacoes
+INSERT INTO avaliacoes (
+    aluno_id, instructor_id, height, weight, fat_mass, lean_mass,
+    left_arm_relaxed, right_arm_relaxed, left_arm_contracted, right_arm_contracted,
+    left_thigh, right_thigh, left_calf, right_calf, chest, abdomen, waist, hip
+)
+VALUES
+(1, 2, 1.75, 70.0, 15.0, 55.0, 30.0, 30.0, 32.0, 32.0, 50.0, 50.0, 35.0, 35.0, 90.0, 80.0, 78.0, 95.0),
+(2, 3, 1.60, 60.0, 20.0, 40.0, 28.0, 28.0, 30.0, 30.0, 48.0, 48.0, 33.0, 33.0, 85.0, 78.0, 75.0, 90.0),
+(3, 2, 1.80, 80.0, 18.0, 62.0, 32.0, 32.0, 34.0, 34.0, 52.0, 52.0, 36.0, 36.0, 95.0, 85.0, 82.0,100.0),
+(4, 3, 1.65, 55.0, 16.0, 39.0, 27.0, 27.0, 29.0, 29.0, 46.0, 46.0, 32.0, 32.0, 80.0, 70.0, 68.0, 88.0),
+(5, 2, 1.70, 65.0, 17.0, 48.0, 29.0, 29.0, 31.0, 31.0, 47.0, 47.0, 34.0, 34.0, 85.0, 75.0, 73.0, 92.0);
+
+-- Tabela fotos_avaliacoes
+INSERT INTO fotos_avaliacoes (avaliacao_id, foto_path)
+VALUES
+(1, '/path/to/foto1.jpg'),
+(2, '/path/to/foto2.jpg'),
+(3, '/path/to/foto3.jpg'),
+(4, '/path/to/foto4.jpg'),
+(5, '/path/to/foto5.jpg');
+
+-- Tabela exercicios
+INSERT INTO exercicios (name, muscles, adm_id)
+VALUES
+('Supino Reto',       'Peito, Tríceps, Ombros', 1),
+('Agachamento Livre', 'Quadríceps, Glúteos, Lombar', 1),
+('Rosca Direta',      'Bíceps, Antebraços', 1),
+('Puxada Aberta',     'Costas, Bíceps, Ombros', 1),
+('Elevação Lateral',  'Ombros, Trapézio', 1);
+
+-- Tabela treinos
+INSERT INTO treinos (name, notes, adm_id)
+VALUES
+('Treino A', 'Peito e Tríceps', 1),
+('Treino B', 'Costas e Bíceps', 1),
+('Treino C', 'Pernas e Glúteos', 1),
+('Treino D', 'Ombros e Trapézio', 1),
+('Treino E', 'Corpo inteiro', 1);
+
+-- Tabela exercicios_de_treinos
+INSERT INTO exercicios_de_treinos (treino_id, exercicio_id, repeticoes, series, descanso_segundos)
+VALUES
+(1, 1, 10, 3, 60),
+(2, 2, 12, 4, 90),
+(3, 3,  8, 3, 60),
+(4, 4, 10, 3, 60),
+(5, 5, 15, 3, 45);
+
+-- Tabela treinos_de_alunos
+INSERT INTO treinos_de_alunos (aluno_id, treino_id)
+VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+-- Tabela mensagens
+INSERT INTO mensagens (id_adm, title, body, recipient_type)
+VALUES
+(1, 'Bem-vindos', 'Mensagem de boas-vindas', 'ALL'),
+(1, 'Promoção',   'Nova promoção disponível', 'STUDENTS'),
+(1, 'Aviso',      'Treino especial hoje', 'INSTRUCTORS'),
+(1, 'Reunião',    'Reunião de staff', 'INSTRUCTORS'),
+(1, 'Evento',     'Evento aberto a todos', 'ALL');
+
+-- Tabela pagamentos
+INSERT INTO pagamentos (id_aluno, id_plano, status, payment, payment_date, expiration_date, user_id)
+VALUES
+(1, 1, TRUE,  'Credit Card',    '2023-01-01', '2023-02-01', 1),
+(2, 2, TRUE,  'Boleto',         '2023-01-15', '2023-02-15', 1),
+(3, 3, TRUE,  'Pix',            '2023-02-01', '2023-03-01', 1),
+(4, 4, FALSE, 'Dinheiro',       '2023-02-10', '2023-03-10', 1),
+(5, 5, TRUE,  'Cartão Débito',  '2023-03-01', '2023-04-01', 1);
+
+-- Tabela presenca
+INSERT INTO presenca (aluno_id, data)
+VALUES
+(1, '2023-02-02'),
+(2, '2023-02-03'),
+(3, '2023-02-04'),
+(4, '2023-02-05'),
+(5, '2023-02-06');
+
+-- Tabela cargo_horaria
+INSERT INTO cargo_horaria (dia_id, horario_id, user_id)
+VALUES
+(1, 1, 2),  -- Domingo, 08:00-12:00, Instr1
+(2, 2, 2),  -- Segunda, 13:00-17:00, Instr1
+(3, 3, 3),  -- Terça,   18:00-22:00, Instr2
+(4, 1, 3),  -- Quarta,  08:00-12:00, Instr2
+(5, 2, 2);  -- Quinta,  13:00-17:00, Instr1
+
+
+COMMIT;
